@@ -1,0 +1,7 @@
+consigne:                   # l'id unique
+    name: consigne1         # un nom
+    initial: 21             # un état initial
+    min: 12                 # une valeur mini
+    max: 24                 # une valeur max
+    step: 0.5               # la valeur d'un interval
+    unit_of_measurement: °C

@@ -1,0 +1,139 @@
+- id: '1625143041531'
+  alias: turn off
+  description: ''
+  trigger:
+  - platform: event
+    event_type: zha_event
+    event_data:
+      device_ieee: 00:12:4b:00:23:b2:b2:e5
+      command: 'off'
+  condition: []
+  action:
+  - service: switch.turn_off
+    target:
+      device_id: 15f533a1d23af8b397b32baa60a13cf8
+  mode: single
+- id: '1625144148648'
+  alias: 'turn on '
+  description: ''
+  trigger:
+  - platform: event
+    event_type: zha_event
+    event_data:
+      device_ieee: 00:12:4b:00:23:b2:b2:e5
+      command: 'on'
+  condition: []
+  action:
+  - service: switch.turn_on
+    target:
+      device_id: 15f533a1d23af8b397b32baa60a13cf8
+  mode: single
+- id: '1625144259674'
+  alias: toggle
+  description: ''
+  trigger:
+  - platform: event
+    event_type: zha_event
+    event_data:
+      device_ieee: 00:12:4b:00:23:b2:b2:e5
+      command: toggle
+  condition: []
+  action:
+  - service: switch.toggle
+    target:
+      device_id: 15f533a1d23af8b397b32baa60a13cf8
+  mode: single
+- id: '1625148847605'
+  alias: Motion-activated Light
+  description: ''
+  use_blueprint:
+    path: homeassistant/notify_leaving_zone.yaml
+    input:
+      person_entity: person.xontik
+      zone_entity: zone.home
+      notify_device: f9510eadcee56969173c28e82a3d75db
+- id: '1625149326225'
+  alias: count cat entries
+  description: ''
+  trigger:
+  - type: motion
+    platform: device
+    device_id: 86db6c9806d5cbe506a4862068ba82ca
+    entity_id: binary_sensor.sonoff_mvt_1_ias_zone
+    domain: binary_sensor
+  condition: []
+  action:
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 2
+      milliseconds: 0
+  - type: is_not_open
+    condition: device
+    device_id: 4a2dc8507c753be2ddd233ead1628353
+    entity_id: binary_sensor.sonoff_open_1_ias_zone
+    domain: binary_sensor
+  - service: counter.increment
+    target:
+      entity_id: counter.testcount
+  mode: single
+- id: '1631369231531'
+  alias: Disk full alert
+  description: ''
+  trigger:
+  - platform: numeric_state
+    entity_id: sensor.disk_use_percent
+    above: '15'
+  condition: []
+  action:
+  - device_id: 4d3c57d317924d672ad273b54ac7d7d3
+    domain: mobile_app
+    type: notify
+    title: 'disk usage '
+    message: alert rouge y’a plus de place
+  - device_id: 4bc2bb6aab9f131b6b05fcc358b9fe9f
+    domain: mobile_app
+    type: notify
+    title: 'disk usage '
+    message: alert rouge y’a plus de place
+  mode: single
+- id: '1633882026743'
+  alias: Change consigne
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: input_number.consigne
+  condition: []
+  action:
+  - service: climate.set_temperature
+    target:
+      entity_id: climate.study
+    data:
+      temperature: '{{ states(''input_number.consigne'') | float }}'
+  mode: single
+- id: '16267588'
+  alias: Notify Backup Failure
+  trigger:
+  - platform: event
+    event_type: auto_backup.backup_failed
+  action:
+  - service: persistent_notification.create
+    data:
+      title: Backup Failed.
+      message: 'Name: {{ trigger.event.data.name }}
+
+        Error: {{ trigger.event.data.error }}'
+  - service: notify.mobile_app_benjamins_iphone
+    data:
+      title: Backup Failed.
+      message: '[object Object]'
+- alias: Perform Auto Backup
+  id: '16267589'
+  trigger:
+  - platform: time_pattern
+    hours: /12
+  action:
+  - service: auto_backup.backup_full
+    data:
+      name: 'AutoBackup: {{ now().strftime(''%a, %-I:%M %p (%d/%m/%Y)'') }}'
+      keep_days: 7

@@ -1,0 +1,109 @@
+
+# Configure a default setup of Home Assistant (frontend, api, etc)
+default_config:
+
+# Text to speech
+tts:
+  - platform: google_translate
+
+group: !include groups.yaml
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+input_number: !include input_number.yaml
+
+counter:
+    testcount:
+        initial: 0
+        step: 1
+        
+proxmoxve:
+  - host: 192.168.0.40
+    username: homeassistant@pve
+    password: mdphomeassistant
+    verify_ssl: false
+    realm: pve
+    nodes:
+      - node: tesla
+        vms:
+          - 1008
+          - 10000
+          
+switch:
+    - platform: wake_on_lan
+      name: Wol Gonk
+      mac: "A8:A1:59:51:4C:52"
+      host: 192.168.0.244
+    
+sensor:  
+  - platform: systemmonitor
+    resources:
+    - type: processor_use
+    - type: disk_use_percent
+      arg: "/"
+    - type: disk_free
+      arg: "/"
+    - type: memory_use_percent
+    - type: processor_temperature
+    - type: last_boot
+  - platform: sql
+    db_url: !secret mariadb_url
+    queries:
+      - name: DB size
+        query: 'SELECT table_schema "database", round(sum(data_length + index_length)/1024/1024,1) "value" FROM information_schema.TABLES WHERE table_schema="homeassistant" GROUP BY table_schema;'
+        column: 'value'
+        unit_of_measurement: MB
+
+  - platform: min_max
+    name: "Temperature moyenne"
+    type: 'mean'
+    entity_ids:
+      - sensor.sonoff_temp_1_temperature
+      - sensor.sonoff_temp_3_temperature
+    
+    
+http:
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - 192.168.0.50
+    
+spotify:
+  client_id: !secret spotify_client_id
+  client_secret: !secret spotify_client_secret
+
+recorder:
+  db_url: !secret mariadb_url
+  include:
+    domains:
+      - switch
+      - media_player
+      - sensor
+
+climate:
+  - platform: generic_thermostat
+    name: Study
+    heater: switch.xiaomi_plug_1
+    target_sensor: sensor.average_temperature_1
+    min_temp: 15
+    max_temp: 25
+    ac_mode: false
+    cold_tolerance: 0.3
+    hot_tolerance: 0
+    min_cycle_duration:
+      seconds: 5
+    keep_alive:
+      minutes: 3
+    initial_hvac_mode: "heat"
+    away_temp: 16
+    precision: 0.1
+
+template:
+  - sensor:
+      - name: "Average temperature"
+        unique_id: 'avg.temperature_1' 
+        unit_of_measurement: "°C"
+        state: >
+          {% set salon = states('sensor.sonoff_temp_1_temperature') | float %}
+          {% set couloir = states('sensor.sonoff_temp_3_temperature') | float %}
+
+          {{ ((salon + couloir) / 2) | round(1) }}
