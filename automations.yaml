@@ -39,19 +39,10 @@
       command: toggle
   condition: []
   action:
-  - service: switch.toggle
+  - service: light.toggle
     target:
-      device_id: 15f533a1d23af8b397b32baa60a13cf8
+      device_id: ffd52ce30c1cc44d87626272abe05e05
   mode: single
-- id: '1625148847605'
-  alias: Motion-activated Light
-  description: ''
-  use_blueprint:
-    path: homeassistant/notify_leaving_zone.yaml
-    input:
-      person_entity: person.xontik
-      zone_entity: zone.home
-      notify_device: f9510eadcee56969173c28e82a3d75db
 - id: '1625149326225'
   alias: count cat entries
   description: ''
@@ -83,7 +74,7 @@
   trigger:
   - platform: numeric_state
     entity_id: sensor.disk_use_percent
-    above: '15'
+    above: '25'
   condition: []
   action:
   - device_id: 4d3c57d317924d672ad273b54ac7d7d3
@@ -137,3 +128,68 @@
     data:
       name: 'AutoBackup: {{ now().strftime(''%a, %-I:%M %p (%d/%m/%Y)'') }}'
       keep_days: 7
+- id: '1635261152132'
+  alias: Stop heating if windows open
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: group.ouverture_pieces_de_vies
+    to: 'on'
+  condition: []
+  action:
+  - service: climate.turn_off
+    target:
+      area_id:
+      - living_room
+      - living_room
+  mode: single
+- id: '1635261153456782'
+  alias: Start heating if windows close
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: group.ouverture_pieces_de_vies
+    to: 'off'
+  condition:
+  - condition: state
+    entity_id: input_boolean.chauffage
+    state: 'on'
+  action:
+  - service: climate.turn_on
+    target:
+      area_id:
+      - living_room
+      - living_room
+  mode: single
+- id: '1635280457474'
+  alias: start delayed homekit
+  description: ''
+  trigger:
+  - platform: homeassistant
+    event: start
+  condition: []
+  action:
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 10
+      milliseconds: 0
+  - service: homekit.start
+  mode: single
+- id: '1635281353877'
+  alias: alert pluie
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: weather.home
+    to: rainy
+  condition:
+  - condition: state
+    entity_id: group.ouverture_pieces_de_vies
+    state: 'on'
+  action:
+  - service: notify.notify
+    data:
+      title: attention pluie
+      message: fenetre/velux ouvert
+  mode: single

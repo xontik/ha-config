@@ -1,0 +1,13 @@
+wol_gonk:
+  alias: Wol Gonk
+  sequence:
+  - service: wake_on_lan.send_magic_packet
+    data:
+      mac: A8:A1:59:51:4C:52
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 3
+      milliseconds: 0
+  mode: single
+  icon: hass:microsoft-windows
